@@ -1,0 +1,12 @@
+node_modules/
+
+# Segredos - nunca versionar
+.env
+
+# Dados reais (mensagens de clientes, fotos de portfólio, credencial do admin)
+# são gerados em runtime, não fazem parte do código-fonte.
+data/*.json
+uploads/portfolio/*
+!uploads/portfolio/.gitkeep
+
+*.log
