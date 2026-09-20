@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cookieSession = require('cookie-session');
+const bcrypt = require('bcryptjs');
+const { writeJSON } = require('./lib/db');
 
 const publicRoutes = require('./routes/public');
 const adminRoutes = require('./routes/admin');
@@ -15,10 +17,27 @@ if (!SESSION_SECRET) {
   process.exit(1);
 }
 
+// Auto-create admin if it doesn't exist
 const adminFile = path.join(__dirname, 'data', 'admin.json');
 if (!fs.existsSync(adminFile)) {
-  console.error('Nenhuma conta admin encontrada. Rode "npm run seed-admin" primeiro (após configurar o .env).');
-  process.exit(1);
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@braco.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  
+  if (adminPassword.length < 6) {
+    console.error('A senha precisa ter pelo menos 6 caracteres.');
+    process.exit(1);
+  }
+  
+  // Ensure data directory exists
+  const dataDir = path.join(__dirname, 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  
+  const passwordHash = bcrypt.hashSync(adminPassword, 10);
+  writeJSON('admin', { email: adminEmail.toLowerCase().trim(), passwordHash });
+  
+  console.log(`✓ Conta admin criada/atualizada para: ${adminEmail}`);
 }
 
 const app = express();
@@ -53,3 +72,4 @@ app.listen(PORT, () => {
   console.log(`Elétrica Vallerini rodando em http://localhost:${PORT}`);
   console.log(`Painel admin em http://localhost:${PORT}/admin.html`);
 });
+
